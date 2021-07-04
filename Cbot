@@ -1,0 +1,57 @@
+import random
+import shelve
+from random import randint
+
+
+def ask_or_not():
+    if randint(1,9) < 3:
+        return True
+        
+        
+def ask_about_word():     
+    with open("unknown.txt") as word:
+        word = list(word)
+        sel_word = (random.choice(word).lower())
+        sel_word = sel_word.replace("\n", "")
+
+    print('What would a proper answer to "' + sel_word + '" be? ', end='')
+    ans_to_sel_word = input().lower()
+    
+
+    with shelve.open("dictionary", writeback=True) as asked_word:
+
+        try:
+            asked_word[sel_word].append(ans_to_sel_word)
+        except:
+            asked_word[sel_word] = [ans_to_sel_word]
+
+        
+print("This is the chatbot.\n")
+
+
+while True:
+    userinp = input(": ").lower()
+    #s = ''.join(filter(str.isalnum, userinp))
+    
+
+    with shelve.open("dictionary") as greetings:
+        
+        if userinp in greetings.keys():
+        
+            print(random.choice((greetings[userinp])).capitalize())
+
+        elif userinp == "quit":
+            break
+        
+        else:
+            print("I do not understand. I'll save that phrase for later'")
+
+            with open("unknown.txt", "a+") as word:
+                print(userinp.lower(), file=word)
+
+
+    if ask_or_not():
+        answer = input("May i ask you a question? ").casefold()
+        if answer == "yes" or answer == "y":
+            ask_about_word()
+     
