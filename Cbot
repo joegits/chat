@@ -4,26 +4,80 @@ from random import randint
 
 
 def ask_or_not():
-    if randint(1,9) < 3:
+    if randint(1,9) < 6:
         return True
         
+def strip_and_check(string):
+    new_string = ''
+    question = False
+    signs_to_strip = "!?.,'"
+    for i in string:
+        if "?" == i:
+            question = True
+        if i in signs_to_strip:
+            pass
+        else:
+            new_string += i
+    return(new_string, question)
+
+
+def ask_if_q_or_not(string):
+    print('Would you say that "' + string + '" is a question?', end='')
+    ans = input().lower()
+    print()
+    if ans == "y" or ans == "yes":
+        return True
+    else:
+        return False
+    
+    
+def ask_question():
+    with shelve.open("q_dictionary", writeback=True) as file:
+        print()
+        sel_q_key = random.choice(list(file))
+            
+        print(sel_q_key + '?')
+        answer1 = input(': ')
+        clean_answer, question = strip_and_check(answer1)
+        if clean_answer in file[sel_q_key] or answer1 in [sel_q_key]:
+            pass
+        else:
+            file[sel_q_key].append(clean_answer)
+        print()
         
-def ask_about_word():     
+def ask_about_word():
+    question_flag = None
+    
     with open("unknown.txt") as word:
         word = list(word)
         sel_word = (random.choice(word).lower())
         sel_word = sel_word.replace("\n", "")
+    question_flag = ask_if_q_or_not(sel_word)
 
-    print('What would a proper answer to "' + sel_word + '" be? ', end='')
+    if question_flag:
+        print('If i asked you "' + sel_word + '?", What would you answer me?')
+
+    else:
+        print('What would a proper answer to "' + sel_word + '" be? ', end='')
+
     ans_to_sel_word = input().lower()
-    
+    print()
 
-    with shelve.open("dictionary", writeback=True) as asked_word:
+    if question_flag:
+        with shelve.open("q_dictionary", writeback=True) as asked_word:
 
-        try:
-            asked_word[sel_word].append(ans_to_sel_word)
-        except:
-            asked_word[sel_word] = [ans_to_sel_word]
+            try:
+                asked_word[sel_word].append(ans_to_sel_word)
+            except:
+                asked_word[sel_word] = [ans_to_sel_word]
+        
+    else:
+        with shelve.open("dictionary", writeback=True) as asked_word:
+
+            try:
+                asked_word[sel_word].append(ans_to_sel_word)
+            except:
+                asked_word[sel_word] = [ans_to_sel_word]
 
         
 print("This is the chatbot.\n")
@@ -31,27 +85,49 @@ print("This is the chatbot.\n")
 
 while True:
     userinp = input(": ").lower()
+    userinp, question = strip_and_check(userinp)
     #s = ''.join(filter(str.isalnum, userinp))
-    
-
-    with shelve.open("dictionary") as greetings:
+    print()
+    if question:
         
-        if userinp in greetings.keys():
+        with shelve.open("q_dictionary") as greetings:
         
-            print(random.choice((greetings[userinp])).capitalize())
-
-        elif userinp == "quit":
-            break
+            if userinp in greetings.keys():
         
-        else:
-            print("I do not understand. I'll save that phrase for later'")
+                print(random.choice((greetings[userinp])).capitalize())
 
-            with open("unknown.txt", "a+") as word:
-                print(userinp.lower(), file=word)
+            elif userinp == "quit":
+                break
+        
+            else:
+                print("I do not understand. I'll save that question for later.")
+
+                with open("unknown.txt", "a+") as word:
+                    print(userinp.lower(), file=word)
+
+    else:
+        
+        with shelve.open("dictionary") as greetings:
+        
+            if userinp in greetings.keys():
+        
+                print(random.choice((greetings[userinp])).capitalize())
+
+            elif userinp == "quit":
+                break
+        
+            else:
+                print("I do not understand. I'll save that phrase for later.")
+
+                with open("unknown.txt", "a+") as word:
+                    print(userinp.lower(), file=word)
 
 
     if ask_or_not():
         answer = input("May i ask you a question? ").casefold()
         if answer == "yes" or answer == "y":
+            print()
             ask_about_word()
+    elif ask_or_not():
+        ask_question()
      
